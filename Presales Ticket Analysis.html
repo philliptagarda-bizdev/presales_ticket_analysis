@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Presales Sales-Coach Review</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0b0e14;
+    --panel:#11151f;
+    --panel-2:#161b27;
+    --line:#262e40;
+    --line-soft:#1d2433;
+    --fog:#8a93a6;
+    --fog-2:#aeb6c6;
+    --paper:#eef1f6;
+    --amber:#f4a531;
+    --amber-soft:#3a2c12;
+    --green:#54c08a;
+    --red:#e0645c;
+    --blue:#5fa8e0;
+    --mono:'JetBrains Mono',monospace;
+    --disp:'Fraunces',Georgia,serif;
+    --body:'Inter',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:var(--ink);
+    color:var(--paper);
+    font-family:var(--body);
+    -webkit-font-smoothing:antialiased;
+    overflow:hidden;
+  }
+  /* ---- deck mechanics ---- */
+  .deck{height:100vh;width:100vw;position:relative}
+  .slide{
+    position:absolute;inset:0;
+    padding:5.5vh 7vw 7vh;
+    display:none;
+    flex-direction:column;
+    opacity:0;
+    transition:opacity .45s ease;
+    overflow:hidden;
+  }
+  .slide.active{display:flex;opacity:1}
+  .slide-inner{
+    width:100%;max-width:1180px;margin:0 auto;
+    flex:1;display:flex;flex-direction:column;min-height:0;
+  }
+  /* scrollable safety on short viewports */
+  @media (max-height:640px){
+    .slide{overflow-y:auto}
+  }
+
+  /* ---- shared type ---- */
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:.72rem;letter-spacing:.28em;text-transform:uppercase;
+    color:var(--amber);
+    display:flex;align-items:center;gap:.8rem;
+    margin-bottom:1.6rem;
+  }
+  .eyebrow::before{content:"";width:26px;height:1px;background:var(--amber);display:inline-block}
+  h1{font-family:var(--disp);font-weight:500;line-height:1.02;letter-spacing:-.01em}
+  h2{font-family:var(--disp);font-weight:500;font-size:clamp(1.7rem,3.4vw,2.7rem);line-height:1.05;letter-spacing:-.01em;margin-bottom:.4rem}
+  .sub{color:var(--fog-2);font-size:clamp(.95rem,1.3vw,1.08rem);line-height:1.5;max-width:62ch}
+  p{line-height:1.55}
+  strong{color:#fff;font-weight:600}
+  .amber{color:var(--amber)}
+  .mono{font-family:var(--mono)}
+
+  /* ---- title slide ---- */
+  .title-slide .slide-inner{justify-content:center}
+  .title-slide h1{font-size:clamp(2.6rem,6.6vw,5rem)}
+  .title-meta{
+    margin-top:auto;padding-top:3rem;
+    display:flex;justify-content:space-between;align-items:flex-end;gap:2rem;flex-wrap:wrap;
+    border-top:1px solid var(--line-soft);
+  }
+  .title-meta .block{font-family:var(--mono);font-size:.78rem;color:var(--fog);line-height:1.7}
+  .title-meta .block b{color:var(--paper);font-weight:500;display:block;letter-spacing:.04em}
+  .ribbon{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1.8rem}
+  .chip{
+    font-family:var(--mono);font-size:.7rem;letter-spacing:.06em;
+    border:1px solid var(--line);border-radius:100px;
+    padding:.4rem .85rem;color:var(--fog-2);
+  }
+  .chip.hot{border-color:var(--amber);color:var(--amber)}
+
+  /* big stat band on title */
+  .statband{display:flex;gap:0;margin-top:2.6rem;border:1px solid var(--line-soft);border-radius:14px;overflow:hidden}
+  .statband .cell{flex:1;padding:1.3rem 1.4rem;border-right:1px solid var(--line-soft)}
+  .statband .cell:last-child{border-right:0}
+  .statband .n{font-family:var(--disp);font-size:clamp(1.6rem,3.2vw,2.4rem);color:#fff;line-height:1}
+  .statband .l{font-family:var(--mono);font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--fog);margin-top:.55rem}
+
+  /* ---- section header (slide head) ---- */
+  .head{margin-bottom:2rem;flex-shrink:0}
+
+  /* ---- generic content scroller ---- */
+  .body-scroll{flex:1;min-height:0;overflow:auto;padding-right:.5rem}
+  .body-scroll::-webkit-scrollbar{width:8px}
+  .body-scroll::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px}
+
+  /* ---- callout ---- */
+  .callout{
+    border-left:2px solid var(--amber);
+    background:linear-gradient(90deg,var(--amber-soft),transparent 70%);
+    padding:1rem 1.3rem;border-radius:0 10px 10px 0;
+    margin:.4rem 0 1.6rem;
+  }
+  .callout p{font-size:1.02rem;color:var(--fog-2)}
+  .callout .tag{font-family:var(--mono);font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;color:var(--amber);display:block;margin-bottom:.4rem}
+
+  /* ---- table (behavioral matrix) ---- */
+  .matrix{width:100%;border-collapse:collapse;font-size:.92rem}
+  .matrix th,.matrix td{padding:.7rem .6rem;text-align:center;border-bottom:1px solid var(--line-soft)}
+  .matrix thead th{
+    font-family:var(--mono);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--fog);font-weight:500;border-bottom:1px solid var(--line);
+  }
+  .matrix td:first-child,.matrix th:first-child{text-align:left;color:var(--fog-2);font-weight:500;white-space:nowrap}
+  .matrix tbody tr:hover{background:var(--panel)}
+  .matrix .v{font-family:var(--mono);font-weight:500}
+  .pk{color:var(--amber);font-weight:700}
+  .lo{color:var(--red)}
+  .matrix .agent{font-family:var(--mono);font-size:.7rem;color:var(--paper);letter-spacing:.02em}
+  .legend{font-family:var(--mono);font-size:.68rem;color:var(--fog);margin-top:1rem;display:flex;gap:1.4rem;flex-wrap:wrap}
+  .legend span{display:flex;align-items:center;gap:.4rem}
+  .dot{width:9px;height:9px;border-radius:2px;display:inline-block}
+
+  /* ---- persona grid ---- */
+  .persona-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
+  @media (max-width:900px){.persona-grid{grid-template-columns:1fr 1fr}}
+  .pcard{
+    background:var(--panel);border:1px solid var(--line-soft);border-radius:12px;
+    padding:1.15rem 1.2rem;display:flex;flex-direction:column;gap:.55rem;
+    position:relative;overflow:hidden;
+  }
+  .pcard .vol{font-family:var(--mono);font-size:.64rem;color:var(--fog);letter-spacing:.1em;position:absolute;top:1rem;right:1.1rem}
+  .pcard h3{font-family:var(--disp);font-weight:500;font-size:1.18rem;line-height:1.1}
+  .pcard .role{font-family:var(--mono);font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--amber);margin-top:-.2rem}
+  .pcard p{font-size:.82rem;color:var(--fog-2);line-height:1.5}
+  .pcard .risk{font-size:.76rem;color:var(--fog);border-top:1px solid var(--line-soft);padding-top:.55rem;margin-top:auto}
+  .pcard .risk b{color:var(--red);font-weight:600;font-size:.66rem;letter-spacing:.08em;text-transform:uppercase}
+  .pcard.flag{border-color:#5a2b27}
+  .pcard.flag .role{color:var(--red)}
+
+  /* ---- list cards ---- */
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:2.4rem;flex:1;min-height:0}
+  @media (max-width:900px){.cols{grid-template-columns:1fr;gap:1.4rem;overflow:auto}}
+  .col-h{font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--amber);margin-bottom:1.1rem;display:flex;align-items:center;gap:.6rem}
+  .col-h .num{color:var(--fog);}
+  .play{display:flex;gap:.9rem;padding:.7rem 0;border-bottom:1px solid var(--line-soft)}
+  .play:last-child{border-bottom:0}
+  .play .ix{font-family:var(--mono);font-size:.75rem;color:var(--amber);padding-top:.15rem;min-width:1.4rem}
+  .play .txt{font-size:.88rem;line-height:1.45;color:var(--fog-2)}
+  .play .txt b{color:#fff}
+
+  /* nudge cards */
+  .nudges{display:grid;grid-template-columns:repeat(2,1fr);gap:.7rem;margin-top:.4rem}
+  @media (max-width:760px){.nudges{grid-template-columns:1fr}}
+  .nudge{background:var(--panel);border:1px solid var(--line-soft);border-radius:9px;padding:.7rem .9rem;font-size:.82rem;color:var(--fog-2);display:flex;gap:.7rem;align-items:flex-start}
+  .nudge .led{width:8px;height:8px;border-radius:50%;background:var(--amber);margin-top:.45rem;flex-shrink:0;box-shadow:0 0 8px var(--amber)}
+
+  /* priority banner */
+  .priority{
+    background:var(--panel-2);border:1px solid var(--line);border-radius:12px;
+    padding:1.1rem 1.3rem;margin-top:1.2rem;display:flex;gap:1rem;align-items:flex-start;
+  }
+  .priority .num{font-family:var(--disp);font-size:2.2rem;color:var(--amber);line-height:.9}
+  .priority .t{font-size:.9rem;color:var(--fog-2);line-height:1.5}
+  .priority .t b{color:#fff}
+
+  /* caveat slide */
+  .caveat-list{display:flex;flex-direction:column;gap:1rem;margin-top:1.4rem}
+  .caveat{display:flex;gap:1rem;align-items:flex-start;font-size:.95rem;color:var(--fog-2);line-height:1.5}
+  .caveat .mk{font-family:var(--mono);color:var(--amber);font-size:.8rem;padding-top:.15rem}
+
+  /* closing */
+  .closing .slide-inner{justify-content:center;text-align:left}
+  .closing h1{font-size:clamp(2rem,4.6vw,3.4rem);max-width:18ch}
+  .next{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:2.6rem}
+  @media (max-width:760px){.next{grid-template-columns:1fr}}
+  .nx{border:1px solid var(--line-soft);border-radius:11px;padding:1.1rem 1.2rem}
+  .nx .s{font-family:var(--mono);font-size:.66rem;letter-spacing:.14em;color:var(--amber);text-transform:uppercase}
+  .nx p{font-size:.86rem;color:var(--fog-2);margin-top:.5rem;line-height:1.45}
+
+  /* ---- chrome: progress + nav ---- */
+  .chrome{position:fixed;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:space-between;padding:1rem 7vw;pointer-events:none;z-index:20}
+  .pager{font-family:var(--mono);font-size:.72rem;color:var(--fog);letter-spacing:.1em;pointer-events:auto}
+  .pager b{color:var(--paper)}
+  .nav{display:flex;gap:.5rem;pointer-events:auto}
+  .nav button{
+    font-family:var(--mono);background:var(--panel);border:1px solid var(--line);color:var(--fog-2);
+    width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:1rem;transition:.18s;
+  }
+  .nav button:hover{border-color:var(--amber);color:var(--amber)}
+  .nav button:disabled{opacity:.3;cursor:default}
+  .progress{position:fixed;top:0;left:0;height:2px;background:var(--amber);z-index:30;transition:width .35s ease;box-shadow:0 0 10px var(--amber)}
+  .brand{position:fixed;top:1.4rem;right:7vw;font-family:var(--mono);font-size:.66rem;letter-spacing:.18em;color:var(--fog);text-transform:uppercase;z-index:20}
+
+  /* tiny inline bar viz for matrix-free emphasis */
+  .barrow{display:flex;align-items:center;gap:.7rem;margin:.5rem 0}
+  .barrow .lab{font-family:var(--mono);font-size:.72rem;color:var(--fog-2);min-width:5.5rem}
+  .barrow .track{flex:1;height:7px;background:var(--line-soft);border-radius:4px;overflow:hidden}
+  .barrow .fill{height:100%;background:var(--amber);border-radius:4px}
+  .barrow .pct{font-family:var(--mono);font-size:.72rem;color:var(--paper);min-width:2.3rem;text-align:right}
+
+  .footnote{font-family:var(--mono);font-size:.66rem;color:var(--fog);margin-top:1rem;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+<div class="brand">CSRO · Presales Signal</div>
+<div class="deck" id="deck">
+
+  <!-- 1 — TITLE -->
+  <section class="slide title-slide active">
+    <div class="slide-inner">
+      <div class="eyebrow">Sales-Coach Review · ExpressVPN Presales</div>
+      <h1>Reading the<br>presales floor.</h1>
+      <p class="sub" style="margin-top:1.4rem">A behavioral analysis of 642 live presales chats across six agents — what the top performers do differently, the personas behind the numbers, and what the Sales Copilot needs to learn next.</p>
+      <div class="ribbon">
+        <span class="chip">642 tickets</span>
+        <span class="chip">6 agents</span>
+        <span class="chip">Apr–May 2026</span>
+        <span class="chip hot">Coaching + Copilot</span>
+      </div>
+      <div class="statband">
+        <div class="cell"><div class="n">642</div><div class="l">Presales chats analyzed</div></div>
+        <div class="cell"><div class="n">~1–12%</div><div class="l">Explicit close rate</div></div>
+        <div class="cell"><div class="n">58%</div><div class="l">Top extension-offer rate</div></div>
+        <div class="cell"><div class="n">0</div><div class="l">Clean conversion labels</div></div>
+      </div>
+      <div class="title-meta">
+        <div class="block"><b>PREPARED FOR</b>Yossi · Inbound &amp; Outbound team leads</div>
+        <div class="block"><b>SCOPE</b>Late Apr – mid May 2026 · single window</div>
+        <div class="block"><b>METHOD</b>Per-chat behavior, attributed to closing rep</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 — WHAT WE'RE LOOKING AT -->
+  <section class="slide">
+    <div class="slide-inner">
+      <div class="head">
+        <div class="eyebrow">01 · The dataset</div>
+        <h2>What the floor actually looks like</h2>
+      </div>
+      <div class="body-scroll">
+        <p class="sub" style="margin-bottom:1.4rem">642 presales chats and emails, attributed to the rep who closed each thread. Three agents carry the bulk; three handle the long tail.</p>
+
+        <div class="barrow"><span class="lab">Paris</span><span class="track"><span class="fill" style="width:100%"></span></span><span class="pct">172</span></div>
+        <div class="barrow"><span class="lab">Jeannie</span><span class="track"><span class="fill" style="width:92%"></span></span><span class="pct">158</span></div>
+        <div class="barrow"><span class="lab">Jorie</span><span class="track"><span class="fill" style="width:70%"></span></span><span class="pct">120</span></div>
+        <div class="barrow"><span class="lab">Nick</span><span class="track"><span class="fill" style="width:20%"></span></span><span class="pct">35</span></div>
+        <div class="barrow"><span class="lab">Harold</span><span class="track"><span class="fill" style="width:17%"></span></span><span class="pct">30</span></div>
+        <div class="barrow"><span class="lab">Otzi</span><span class="track"><span class="fill" style="width:8%"></span></span><span class="pct">14</span></div>
+
+        <div class="callout" style="margin-top:1.8rem">
+          <span class="tag">Two facts that shape everything</span>
+          <p><strong>Conversions aren't labelled.</strong> Most chats end in an idle-timeout disconnect, not a recorded win or loss — so this is a read on <em>selling behavior</em>, not verified conversion. And a large share of inquiries are <strong>structurally hard to win</strong>: China/Iran/HK censorship questions, crypto-payment requests we can't yet fulfill, free-trial seekers, and a BAU→Tech→Sales transfer chain that makes customers repeat themselves.</p>
+        </div>
+        <p class="footnote">Attribution in multi-transfer threads is approximate. Figures describe a single ~642-ticket window.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 — BEHAVIORAL MATRIX -->
+  <section class="slide">
+    <div class="slide-inner">
+      <div class="head">
+        <div class="eyebrow">02 · Behavioral matrix</div>
+        <h2>Six selling moves, measured</h2>
+        <p class="sub" style="margin-top:.6rem">Rate at which each closing agent performs each behavior across their chats. Peaks in <span class="amber">amber</span>, conspicuous gaps in <span style="color:var(--red)">red</span>.</p>
+      </div>
+      <div class="body-scroll">
+        <table class="matrix">
+          <thead>
+            <tr><th>Behavior</th><th class="agent">Paris</th><th class="agent">Jeannie</th><th class="agent">Jorie</th><th class="agent">Nick</th><th class="agent">Harold</th><th class="agent">Otzi</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Discovery question</td><td class="v">28%</td><td class="v lo">0%</td><td class="v pk">41%</td><td class="v lo">0%</td><td class="v lo">0%</td><td class="v lo">0%</td></tr>
+            <tr><td>Asked for the sale</td><td class="v lo">4%</td><td class="v">12%</td><td class="v lo">1%</td><td class="v lo">3%</td><td class="v">10%</td><td class="v">7%</td></tr>
+            <tr><td>Offered extension / bonus</td><td class="v">8%</td><td class="v">15%</td><td class="v pk">58%</td><td class="v">6%</td><td class="v">13%</td><td class="v">36%</td></tr>
+            <tr><td>Created urgency</td><td class="v">3%</td><td class="v">4%</td><td class="v pk">51%</td><td class="v">14%</td><td class="v lo">0%</td><td class="v">14%</td></tr>
+            <tr><td>Money-back offered <span style="font-family:var(--mono);font-size:.6rem;color:var(--fog)">(reactive-only)</span></td><td class="v">2%</td><td class="v">6%</td><td class="v">11%</td><td class="v">6%</td><td class="v">7%</td><td class="v">14%</td></tr>
+            <tr><td>Empathy / acknowledgment</td><td class="v pk">44%</td><td class="v">28%</td><td class="v">23%</td><td class="v">49%</td><td class="v">37%</td><td class="v">43%</td></tr>
+          </tbody>
+        </table>
+        <div class="callout" style="margin-top:1.6rem">
+          <span class="tag">The one finding to act on</span>
+          <p><strong>Nobody asks for the sale.</strong> Across all six agents the close rate sits between 1% and 12%. Chats die at the order link — not at a customer's "no." Discovery and link-dropping happen; the ask almost never does.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 — PERSONAS -->
+  <section class="slide">
+    <div class="slide-inner">
+      <div class="head">
+        <div class="eyebrow">03 · The people behind the numbers</div>
+        <h2>Six selling personas</h2>
+      </div>
+      <div class="body-scroll">
+        <div class="persona-grid">
+          <div class="pcard">
+            <span class="vol">120 chats</span>
+            <h3>Jorie</h3>
+            <div class="role">The Promoter</div>
+            <p>The most sales-driven profile by far — discovery 41%, extension 58%, urgency 51%. Leads with the 24+4 offer and a confident, forward-moving close.</p>
+            <div class="risk"><b>Watch</b> Over-asserts on compatibility; pivots to the offer before the doubt is resolved.</div>
+          </div>
+          <div class="pcard">
+            <span class="vol">172 chats</span>
+            <h3>Paris</h3>
+            <div class="role">The Multilingual Workhorse</div>
+            <p>Highest volume and empathy (44%), strong technical accuracy, handles RU/ZH/PT/FR with ease.</p>
+            <div class="risk"><b>Watch</b> Almost never creates urgency or closes — defaults to link-drop then timeout.</div>
+          </div>
+          <div class="pcard">
+            <span class="vol">158 chats</span>
+            <h3>Jeannie</h3>
+            <div class="role">The Patient Consultant</div>
+            <p>Best on long technical threads; highest close rate of the big three (12%) and owns a confirmed sale in the data.</p>
+            <div class="risk"><b>Watch</b> 0% opening discovery; answers indefinitely without steering to a decision.</div>
+          </div>
+          <div class="pcard">
+            <span class="vol">35 chats</span>
+            <h3>Nick</h3>
+            <div class="role">The Reviewer</div>
+            <p>Consultative and careful, very high empathy (49%), reads prior correspondence, methodical on setups.</p>
+            <div class="risk"><b>Watch</b> Almost no urgency or incentive use — informative but passive.</div>
+          </div>
+          <div class="pcard">
+            <span class="vol">30 chats</span>
+            <h3>Harold</h3>
+            <div class="role">The Gatekeeper</div>
+            <p>Transactional and accurate; delivers clean factual closes (audit/genuineness reassurance is strong material).</p>
+            <div class="risk"><b>Watch</b> Cool and terse — 0% discovery, 0% urgency. Needs warmth + curiosity.</div>
+          </div>
+          <div class="pcard flag">
+            <span class="vol">14 chats</span>
+            <h3>Otzi</h3>
+            <div class="role">Coaching / PIP signal</div>
+            <p>Flat, repeated reassurances to skeptical buyers instead of troubleshooting depth. Zero explicit purchase signals.</p>
+            <div class="risk"><b>Watch</b> Consistent with the existing flag — prioritize for coaching.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 — COACHING PLAN -->
+  <section class="slide">
+    <div class="slide-inner">
+      <div class="head">
+        <div class="eyebrow">04 · Coaching &amp; training plan</div>
+        <h2>Bottle the best, fix the gap</h2>
+        <p class="sub" style="margin-top:.6rem">Fuse Jorie's incentive engine, Paris's empathy &amp; accuracy, and Jeannie's willingness to actually ask.</p>
+      </div>
+      <div class="body-scroll">
+        <div class="cols">
+          <div>
+            <div class="col-h"><span class="num">A.</span> Plays to codify</div>
+            <div class="play"><span class="ix">01</span><span class="txt"><b>Open with one discovery question, every time.</b> Only Jorie &amp; Paris do it routinely — make it universal.</span></div>
+            <div class="play"><span class="ix">02</span><span class="txt"><b>The manual-extension close</b> is the best brand-safe lever. Jorie runs it at 58%; the rest under 15%. Standardize the script.</span></div>
+            <div class="play"><span class="ix">03</span><span class="txt"><b>Ask for the sale after every resolved objection.</b> "Now that's sorted — shall I walk you through signing up?"</span></div>
+            <div class="play"><span class="ix">04</span><span class="txt"><b>Sell the product, not the refund.</b> MBG is <b>reactive-only</b> — explain it clearly when a customer asks, but never volunteer it. Commission rewards sales that stick, so close on value, not on the exit.</span></div>
+          </div>
+          <div>
+            <div class="col-h"><span class="num">B.</span> Habits to coach against</div>
+            <div class="play"><span class="ix">→</span><span class="txt"><b>Over-promising compatibility</b> (Jorie / Otzi). Replace "tested and supported" with honest, specific expectation-setting — confidence in the product, not a fallback to the refund.</span></div>
+            <div class="play"><span class="ix">→</span><span class="txt"><b>Endless answering</b> with no steer (Jeannie / Nick). Cap discovery, then move to a soft close.</span></div>
+            <div class="play"><span class="ix">→</span><span class="txt"><b>Cold, transactional tone</b> (Harold). Add one acknowledgment line before the factual answer.</span></div>
+            <div class="play"><span class="ix">→</span><span class="txt"><b>Flat repeated reassurance</b> (Otzi). Troubleshoot the real doubt instead of restating "it works."</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 — ASSERTIVENESS WITH EMPATHY -->
+  <section class="slide">
+    <div class="slide-inner">
+      <div class="head">
+        <div class="eyebrow">05 · Pushing harder, kindly</div>
+        <h2>More assertive, still warm</h2>
+        <p class="sub" style="margin-top:.6rem">Aggressive doesn't mean pushy. The lever is <strong>assumptive, low-pressure forward motion</strong> — the agent always proposes the next step, the customer can always decline easily.</p>
+      </div>
+      <div class="body-scroll">
+        <div class="cols">
+          <div>
+            <div class="col-h"><span class="num">A.</span> Five ways to lead the chat</div>
+            <div class="play"><span class="ix">01</span><span class="txt"><b>Assumptive close.</b> "I'll set you up on the 2-year — that's the best value. Sound good?" beats "let me know if you're interested."</span></div>
+            <div class="play"><span class="ix">02</span><span class="txt"><b>Always own the next step.</b> End every message with a question or a micro-action, never a dead "let me know."</span></div>
+            <div class="play"><span class="ix">03</span><span class="txt"><b>Time-box the bonus.</b> The manual extension is real urgency — "I can add the months while we're on chat" — without inventing fake scarcity.</span></div>
+            <div class="play"><span class="ix">04</span><span class="txt"><b>One more ask after a thank-you.</b> "Happy to help — shall I get your account started now?" Don't let a warm close drift to timeout.</span></div>
+            <div class="play"><span class="ix">05</span><span class="txt"><b>Two soft asks, then ease off.</b> Persistence has a ceiling; back off gracefully so it never tips into pressure.</span></div>
+          </div>
+          <div>
+            <div class="col-h"><span class="num">B.</span> Guardrails that keep it warm</div>
+            <div class="play"><span class="ix">✓</span><span class="txt"><b>Resolve the doubt first, then ask.</b> Earn the close by answering the real question — never talk over an objection.</span></div>
+            <div class="play"><span class="ix">✓</span><span class="txt"><b>Always leave an easy exit.</b> "No rush at all" after the ask signals confidence, not desperation.</span></div>
+            <div class="play"><span class="ix">✓</span><span class="txt"><b>Honesty &gt; the close.</b> If it genuinely won't work for them, say so. Trust converts later; an oversold "yes" churns.</span></div>
+            <div class="play"><span class="ix">✕</span><span class="txt"><b>Never repeat the ask 3+ times,</b> guilt, or invent fake limited stock. That's the line between assertive and pushy.</span></div>
+          </div>
+        </div>
+        <div class="callout" style="margin-top:1.4rem">
+          <span class="tag">The mental model</span>
+          <p>Jorie's drive + Paris's warmth in one rep: <strong>confidently propose, gracefully accept a no.</strong> Measure it as <em>close-attempts per chat</em> alongside CSAT and refund rate — so we reward forward motion without rewarding pressure.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 — COPILOT -->
+  <section class="slide">
+    <div class="slide-inner">
+      <div class="head">
+        <div class="eyebrow">06 · Sales Copilot</div>
+        <h2>What the Copilot should learn</h2>
+      </div>
+      <div class="body-scroll">
+        <div class="priority">
+          <div class="num">1</div>
+          <div class="t"><b>Capture a conversion label.</b> Transcripts end in idle-disconnect; the only firm "won" signals are merged billing notes. Without closed-won joined back from billing, neither humans nor the model can tell a good chat from a bad one. Everything else depends on this.</div>
+        </div>
+
+        <p class="sub" style="margin:1.6rem 0 .9rem">Then, real-time nudges mapped directly to the measured gaps:</p>
+        <div class="nudges">
+          <div class="nudge"><span class="led"></span><span><b style="color:#fff">Keep-open guard.</b> Detect intent signals ("let me check the plans," "getting one now") and delay the auto-close — customers return after timeout.</span></div>
+          <div class="nudge"><span class="led"></span><span><b style="color:#fff">No discovery yet</b> — prompt the one opening question.</span></div>
+          <div class="nudge"><span class="led"></span><span><b style="color:#fff">Objection resolved</b> — surface the soft close.</span></div>
+          <div class="nudge"><span class="led"></span><span><b style="color:#fff">Price-shopper</b> — surface 24+4 + manual bonus.</span></div>
+          <div class="nudge"><span class="led"></span><span><b style="color:#fff">Free-trial request</b> — counter with the manual extension + value, not the refund.</span></div>
+          <div class="nudge"><span class="led"></span><span><b style="color:#fff">MBG guardrail</b> — flag if the agent volunteers money-back unprompted; allow it only as a reply to a direct question.</span></div>
+          <div class="nudge"><span class="led"></span><span><b style="color:#fff">Context carry-over</b> across BAU→Tech→Sales so customers stop repeating themselves.</span></div>
+          <div class="nudge"><span class="led"></span><span><b style="color:#fff">Multilingual parity</b> — ZH especially, plus RU/PT/FR/AR/DE all appear.</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 — CAVEATS -->
+  <section class="slide">
+    <div class="slide-inner">
+      <div class="head">
+        <div class="eyebrow">07 · Read this before you act</div>
+        <h2>What this analysis can &amp; can't claim</h2>
+      </div>
+      <div class="body-scroll">
+        <div class="caveat-list">
+          <div class="caveat"><span class="mk">01</span><span>This is <strong>one ~642-ticket window</strong> (late Apr – mid May 2026). Treat it as a snapshot, not a trend.</span></div>
+          <div class="caveat"><span class="mk">02</span><span>Agent attribution in <strong>multi-transfer threads is approximate</strong> — each chat is credited to the closing rep, which can blur shared work.</span></div>
+          <div class="caveat"><span class="mk">03</span><span>Personas describe <strong>behavior, not proven conversion</strong>. Validate against closed-won before tying any incentive to these patterns.</span></div>
+          <div class="caveat"><span class="mk">04</span><span>A large slice of inquiries were <strong>never winnable on the chat</strong> (censorship, crypto, free-trial). Low close rates partly reflect demand mix, not only skill.</span></div>
+        </div>
+        <div class="callout" style="margin-top:1.8rem">
+          <span class="tag">Bottom line</span>
+          <p>The behavioral signal is robust and consistent across all six agents. The fix is cheap and shared: <strong>ask for the sale, standardize the extension close, and instrument conversion.</strong></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 — CLOSING -->
+  <section class="slide closing">
+    <div class="slide-inner">
+      <div class="eyebrow">Next steps</div>
+      <h1>Coach the close. Instrument the win.</h1>
+      <div class="next">
+        <div class="nx"><div class="s">This week</div><p>Roll the manual-extension close + soft-close script to all six agents. Prioritize Otzi for coaching.</p></div>
+        <div class="nx"><div class="s">This month</div><p>Join closed-won from billing into the chat record so we can score chats and re-run this analysis with real outcomes.</p></div>
+        <div class="nx"><div class="s">Copilot backlog</div><p>Ship the keep-open guard and the five gap-mapped nudges; add context carry-over across transfers.</p></div>
+      </div>
+      <p class="footnote" style="margin-top:2.4rem">CSRO · Presales Signal · prepared for Yossi and the inbound &amp; outbound team leads</p>
+    </div>
+  </section>
+
+</div>
+
+<div class="chrome">
+  <div class="pager"><b id="cur">01</b> / <span id="tot">08</span></div>
+  <div class="nav">
+    <button id="prev" aria-label="Previous slide">‹</button>
+    <button id="next" aria-label="Next slide">›</button>
+  </div>
+</div>
+
+<script>
+  const slides=[...document.querySelectorAll('.slide')];
+  let i=0;
+  const cur=document.getElementById('cur');
+  const tot=document.getElementById('tot');
+  const prog=document.getElementById('progress');
+  const prev=document.getElementById('prev');
+  const next=document.getElementById('next');
+  tot.textContent=String(slides.length).padStart(2,'0');
+
+  function show(n){
+    i=Math.max(0,Math.min(slides.length-1,n));
+    slides.forEach((s,x)=>s.classList.toggle('active',x===i));
+    cur.textContent=String(i+1).padStart(2,'0');
+    prog.style.width=((i+1)/slides.length*100)+'%';
+    prev.disabled=i===0;
+    next.disabled=i===slides.length-1;
+    // reset scroll position of any scroller
+    const sc=slides[i].querySelector('.body-scroll');
+    if(sc) sc.scrollTop=0;
+  }
+  prev.onclick=()=>show(i-1);
+  next.onclick=()=>show(i+1);
+  document.addEventListener('keydown',e=>{
+    if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' ') {e.preventDefault();show(i+1);}
+    if(e.key==='ArrowLeft'||e.key==='PageUp') {e.preventDefault();show(i-1);}
+    if(e.key==='Home') show(0);
+    if(e.key==='End') show(slides.length-1);
+  });
+  // touch swipe
+  let tx=0;
+  document.addEventListener('touchstart',e=>tx=e.touches[0].clientX,{passive:true});
+  document.addEventListener('touchend',e=>{
+    const dx=e.changedTouches[0].clientX-tx;
+    if(Math.abs(dx)>60){ dx<0?show(i+1):show(i-1); }
+  },{passive:true});
+  show(0);
+</script>
+</body>
+</html>
